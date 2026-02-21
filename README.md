@@ -90,4 +90,8 @@ npm run reset-project
 - `QUICK_START.md`
 - `ARCHITECTURE.md`
 - `PROJECT_STRUCTURE.md`
+<<<<<<< HEAD
 - `INTEGRATION_GUIDE.md`
+=======
+- `INTEGRATION_GUIDE.md`
+>>>>>>> master
