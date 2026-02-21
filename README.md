@@ -1,7 +1,8 @@
 # OneMore
 
 A fitness mobile app built with **React Native + Expo Router + TypeScript**, focused on training, workout tracking, AI coaching, and community experience.
-<img width="670" height="1600" alt="image" src="https://github.com/user-attachments/assets/718926af-047e-4d11-a18c-971208fee9fa" />
+<img width="706" height="1600" alt="image" src="https://github.com/user-attachments/assets/53c5dba3-e7da-417a-bd6b-3ee01f07eaa3" />
+
 
 
 ## Highlights
