@@ -1,50 +1,93 @@
-# Welcome to your Expo app 👋
+# FitnessAppMobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A fitness mobile app built with **React Native + Expo Router + TypeScript**, focused on training, workout tracking, AI coaching, and community experience.
 
-## Get started
+## Highlights
 
-1. Install dependencies
+- Bottom-tab navigation with core modules: `Training / History / AI Coach / Social / Profile`
+- End-to-end training flow: workout home -> execution -> summary
+- Auth screens included: splash, login, register, and loading state
+- Global state management with Zustand (auth + user session)
+- Clean layered architecture: `presentation / business-logic / data / core / modules`
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+- React Native `0.81`
+- Expo `54`
+- Expo Router `6`
+- TypeScript
+- Zustand
+- AsyncStorage
+- React Navigation
 
-   ```bash
-   npx expo start
-   ```
+## Project Structure
 
-In the output, you'll find options to open the app in a
+```text
+FitnessAppMobile/
+|- app/                         # Expo Router routes and entry pages
+|  |- (tabs)/                   # Main tab routes
+|  |- auth/                     # Auth routes
+|- src/
+|  |- presentation/             # Screens and UI-facing components
+|  |- business-logic/           # hooks / services / store
+|  |- data/                     # API client, repositories, storage
+|  |- core/                     # types / utils / config / constants
+|  |- modules/                  # Feature-based modules
+|- components/                  # Shared UI components
+|- assets/                      # Images, icons, static assets
+|- tests/                       # Unit / integration tests
+```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Quick Start
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 1) Install dependencies
 
 ```bash
+npm install
+```
+
+### 2) Start the dev server
+
+```bash
+npm run start
+```
+
+### 3) Run on a platform
+
+```bash
+npm run android   # Android
+npm run ios       # iOS (macOS required)
+npm run web       # Web
+```
+
+## Available Scripts
+
+```bash
+npm run start
+npm run android
+npm run ios
+npm run web
+npm run lint
 npm run reset-project
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Current Status
 
-## Learn more
+- Current version is focused on mobile UI and interaction flow (good for product demo and frontend iteration).
+- Login currently uses a local mock session flow (not real backend authentication).
+- `src/data/api/client.ts` and repository layers are ready for real API integration.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Roadmap
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- Integrate real account system and token-based authentication
+- Connect training, nutrition, and community APIs
+- Improve test coverage and CI pipeline
+- Add release/build pipeline with EAS
 
-## Join the community
+## Related Docs
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `GETTING_STARTED.md`
+- `QUICK_START.md`
+- `ARCHITECTURE.md`
+- `PROJECT_STRUCTURE.md`
+- `INTEGRATION_GUIDE.md`
