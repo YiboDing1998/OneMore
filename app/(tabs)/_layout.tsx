@@ -1,9 +1,10 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Redirect, Tabs } from 'expo-router';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useAppStore } from '@/src/business-logic/store/appStore';
 
-const PRIMARY = '#22c55e';
+const PRIMARY = '#0df259';
 const INACTIVE = '#94a3b8';
 
 function TabIcon({
@@ -12,31 +13,58 @@ function TabIcon({
   label,
 }: {
   focused: boolean;
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  icon: keyof typeof MaterialIcons.glyphMap;
   label: string;
 }) {
   return (
     <View style={styles.tabItem}>
-      <MaterialCommunityIcons name={icon} size={23} color={focused ? PRIMARY : INACTIVE} />
-      <Text
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.85}
-        style={[styles.tabLabel, focused && styles.tabLabelActive]}
-      >
+      <MaterialIcons name={icon} size={22} color={focused ? PRIMARY : INACTIVE} />
+      <Text numberOfLines={1} style={[styles.tabLabel, focused && styles.tabLabelActive]}>
         {label}
       </Text>
     </View>
   );
 }
 
+function AICoachIcon({ focused }: { focused: boolean }) {
+  return (
+    <View style={styles.tabItem}>
+      <View style={styles.brandMarkWrap}>
+        <Text style={[styles.brandMarkOne, focused && styles.brandMarkOneActive]}>1</Text>
+        <Text style={[styles.brandMarkPlus, focused && styles.brandMarkPlusActive]}>+</Text>
+      </View>
+      <Text numberOfLines={1} style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+        AI Coach
+      </Text>
+    </View>
+  );
+}
+
 export default function TabLayout() {
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const { width } = useWindowDimensions();
+  const capsuleWidth = Math.min(width - 32, 448);
+
+  if (!isAuthenticated) {
+    return <Redirect href="/auth/login" />;
+  }
+
   return (
     <Tabs
+      initialRouteName="training"
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarStyle: styles.tabBar,
+        sceneStyle: styles.scene,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            width: capsuleWidth,
+            left: (width - capsuleWidth) / 2,
+          },
+        ],
+        tabBarItemStyle: styles.tabBarItem,
         tabBarBackground: () => <View style={styles.tabBarBg} />,
       }}
     >
@@ -47,7 +75,7 @@ export default function TabLayout() {
         name="training"
         options={{
           title: 'Training',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="dumbbell" label="Training" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="fitness-center" label="Training" />,
         }}
       />
 
@@ -55,7 +83,7 @@ export default function TabLayout() {
         name="record"
         options={{
           title: 'History',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="calendar-month" label="History" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="history" label="History" />,
         }}
       />
 
@@ -63,19 +91,7 @@ export default function TabLayout() {
         name="ai-coach"
         options={{
           title: 'AI Coach',
-          tabBarButton: ({ onPress, accessibilityState }) => {
-            const focused = accessibilityState?.selected;
-            return (
-              <Pressable onPress={onPress} style={styles.centerWrap}>
-                <View style={[styles.centerBtn, focused && styles.centerBtnActive]}>
-                  <MaterialCommunityIcons name="brain" size={28} color={focused ? '#0f172a' : '#ffffff'} />
-                </View>
-                <Text numberOfLines={1} style={[styles.centerLabel, focused && styles.centerLabelActive]}>
-                  AI Coach
-                </Text>
-              </Pressable>
-            );
-          },
+          tabBarIcon: ({ focused }) => <AICoachIcon focused={focused} />,
         }}
       />
 
@@ -83,7 +99,7 @@ export default function TabLayout() {
         name="community"
         options={{
           title: 'Social',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="account-group" label="Social" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="groups" label="Social" />,
         }}
       />
 
@@ -91,7 +107,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="account" label="Profile" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="person" label="Profile" />,
         }}
       />
     </Tabs>
@@ -101,70 +117,78 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    backgroundColor: 'rgba(255,255,255,0.94)',
-    height: 92,
-    paddingTop: 8,
-    paddingHorizontal: 8,
+    right: undefined,
+    bottom: 32,
+    height: 64,
+    borderTopWidth: 0,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.70)',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 18,
+    elevation: 10,
+    overflow: 'hidden',
+  },
+  scene: {
+    paddingBottom: 108,
   },
   tabBarBg: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.96)',
+    backgroundColor: 'rgba(255,255,255,0.70)',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.30)',
+  },
+  tabBarItem: {
+    paddingVertical: 0,
+    paddingHorizontal: 0,
   },
   tabItem: {
-    width: 64,
+    width: 62,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
+    gap: 0,
+    minWidth: 0,
   },
   tabLabel: {
-    marginTop: 1,
-    fontSize: 10,
-    lineHeight: 12,
+    marginTop: 2,
+    fontSize: 8,
+    lineHeight: 9,
     fontWeight: '700',
-    color: INACTIVE,
-    letterSpacing: 0.2,
     textTransform: 'uppercase',
+    letterSpacing: 0.1,
+    color: INACTIVE,
     textAlign: 'center',
   },
   tabLabelActive: {
     color: PRIMARY,
   },
-  centerWrap: {
-    width: 78,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    marginTop: -24,
-  },
-  centerBtn: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: PRIMARY,
-    borderWidth: 4,
-    borderColor: '#ffffff',
+  brandMarkWrap: {
+    height: 20,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: PRIMARY,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 12,
-    elevation: 8,
   },
-  centerBtnActive: {
-    backgroundColor: '#0df259',
-  },
-  centerLabel: {
-    marginTop: 4,
-    fontSize: 10,
-    lineHeight: 12,
-    fontWeight: '700',
+  brandMarkOne: {
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 20,
     color: INACTIVE,
-    textTransform: 'uppercase',
-    textAlign: 'center',
   },
-  centerLabelActive: {
+  brandMarkOneActive: {
+    color: PRIMARY,
+  },
+  brandMarkPlus: {
+    fontSize: 16,
+    fontWeight: '800',
+    lineHeight: 20,
+    marginLeft: 1,
+    color: INACTIVE,
+  },
+  brandMarkPlusActive: {
     color: PRIMARY,
   },
 });

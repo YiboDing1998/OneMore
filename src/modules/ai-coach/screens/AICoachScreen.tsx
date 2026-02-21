@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { BackHandler, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const PRIMARY = '#22c55e';
 
@@ -14,8 +15,35 @@ const quickActions = [
 ];
 
 export default function AICoachScreen() {
+  const navigation = useNavigation();
   const [mode, setMode] = useState<Mode>('dashboard');
   const [msg, setMsg] = useState('');
+
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (mode === 'chat') {
+          setMode('dashboard');
+          return true;
+        }
+        return false;
+      });
+      return () => sub.remove();
+    }, [mode]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.setOptions({
+        tabBarStyle: mode === 'dashboard' ? undefined : { display: 'none' },
+      });
+      return () => {
+        navigation.setOptions({
+          tabBarStyle: undefined,
+        });
+      };
+    }, [mode, navigation]),
+  );
 
   if (mode === 'chat') {
     return (

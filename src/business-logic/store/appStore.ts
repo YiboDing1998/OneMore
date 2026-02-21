@@ -14,6 +14,7 @@ interface AppStore extends AuthState {
   logout: () => Promise<void>;
   initAuth: () => Promise<void>;
   setUser: (user: User | null) => void;
+  setAuthSession: (user: User | null, isAuthenticated: boolean) => void;
   setError: (error: string | null) => void;
 }
 
@@ -85,5 +86,7 @@ export const useAppStore = create<AppStore>((set) => ({
   },
 
   setUser: (user: User | null) => set({ user }),
+  setAuthSession: (user: User | null, isAuthenticated: boolean) =>
+    set({ user, isAuthenticated, isLoading: false, error: null }),
   setError: (error: string | null) => set({ error }),
 }));

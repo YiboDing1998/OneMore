@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
+  BackHandler,
   Image,
   ScrollView,
   StyleSheet,
@@ -11,6 +12,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const PRIMARY = '#22c55e';
 
@@ -32,20 +34,56 @@ const setRows = [
 ];
 
 export default function TrainingScreen() {
+  const navigation = useNavigation();
   const [mode, setMode] = useState<ScreenMode>('home');
   const [energy, setEnergy] = useState('5');
   const [soreness, setSoreness] = useState('3');
 
   const timer = useMemo(() => '00:12:45', []);
 
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (mode === 'summary') {
+          setMode('execution');
+          return true;
+        }
+        if (mode === 'execution') {
+          setMode('home');
+          return true;
+        }
+        return false;
+      });
+      return () => sub.remove();
+    }, [mode]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      navigation.setOptions({
+        tabBarStyle: mode === 'home' ? undefined : { display: 'none' },
+      });
+      return () => {
+        navigation.setOptions({
+          tabBarStyle: undefined,
+        });
+      };
+    }, [mode, navigation]),
+  );
+
   if (mode === 'execution') {
     return (
       <SafeAreaView style={styles.safeAreaWhite} edges={['top']}>
         <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
         <View style={styles.executionHeader}>
-          <View>
-            <Text style={styles.executionHeaderLabel}>Workout Time</Text>
-            <Text style={styles.executionHeaderTimer}>{timer}</Text>
+          <View style={styles.executionHeaderLeft}>
+            <TouchableOpacity style={styles.backBtn} onPress={() => setMode('home')}>
+              <MaterialIcons name="arrow-back-ios-new" size={16} color="#64748b" />
+            </TouchableOpacity>
+            <View>
+              <Text style={styles.executionHeaderLabel}>Workout Time</Text>
+              <Text style={styles.executionHeaderTimer}>{timer}</Text>
+            </View>
           </View>
           <TouchableOpacity style={styles.finishBtn} onPress={() => setMode('summary')}>
             <Text style={styles.finishBtnText}>Finish</Text>
@@ -122,6 +160,30 @@ export default function TrainingScreen() {
             <MaterialIcons name="expand-more" size={20} color="#cbd5e1" />
           </View>
         </ScrollView>
+
+        <View pointerEvents="box-none" style={styles.executionBottomWrap}>
+          <View style={styles.executionBottomBar}>
+            <TouchableOpacity style={styles.executionNavBtn}>
+              <MaterialIcons name="keyboard-arrow-down" size={28} color="#94a3b8" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.executionNavBtn}>
+              <MaterialIcons name="settings" size={24} color="#94a3b8" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.executionCenterBtn}>
+              <MaterialIcons name="add" size={32} color="#ffffff" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.executionNavBtn}>
+              <MaterialIcons name="sticky-note-2" size={24} color="#94a3b8" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.executionNavBtn}>
+              <View style={styles.sensorWrap}>
+                <MaterialIcons name="sensors" size={24} color="#94a3b8" />
+                <View style={styles.sensorDot} />
+              </View>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.executionHomeIndicator} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -131,6 +193,11 @@ export default function TrainingScreen() {
       <SafeAreaView style={styles.summarySafeArea} edges={['top']}>
         <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.summaryScroll}>
+          <View style={styles.summaryTop}>
+            <TouchableOpacity style={styles.backBtn} onPress={() => setMode('execution')}>
+              <MaterialIcons name="arrow-back-ios-new" size={16} color="#64748b" />
+            </TouchableOpacity>
+          </View>
           <View style={styles.summaryHero}>
             <View style={styles.summaryBadge}>
               <MaterialIcons name="emoji-events" size={46} color={PRIMARY} />
@@ -298,11 +365,13 @@ const styles = StyleSheet.create({
   scheduleMeta: { color: '#64748b', marginTop: 2, fontSize: 12 },
 
   executionHeader: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  executionHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  backBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' },
   executionHeaderLabel: { fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700' },
   executionHeaderTimer: { fontSize: 32, fontWeight: '700', color: '#0f172a' },
   finishBtn: { backgroundColor: PRIMARY, borderRadius: 999, paddingHorizontal: 22, paddingVertical: 8 },
   finishBtnText: { color: '#fff', fontWeight: '700' },
-  executionScroll: { padding: 18, paddingBottom: 120 },
+  executionScroll: { padding: 18, paddingBottom: 190 },
   planTop: { marginBottom: 16 },
   aiTagWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   aiTag: { fontSize: 10, color: '#15803d', backgroundColor: '#dcfce7', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, fontWeight: '700' },
@@ -333,8 +402,77 @@ const styles = StyleSheet.create({
   upcomingCard: { marginTop: 14, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 16, backgroundColor: '#f8fafc', padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   upcomingTitle: { color: '#94a3b8', fontWeight: '700' },
   upcomingMeta: { color: '#cbd5e1', fontSize: 10, textTransform: 'uppercase', marginTop: 2 },
+  executionBottomWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+    paddingTop: 8,
+    backgroundColor: 'transparent',
+  },
+  executionBottomBar: {
+    height: 66,
+    borderRadius: 24,
+    backgroundColor: '#0f172a',
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  executionNavBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  executionCenterBtn: {
+    marginTop: -34,
+    width: 58,
+    height: 58,
+    borderRadius: 16,
+    backgroundColor: PRIMARY,
+    borderWidth: 4,
+    borderColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: PRIMARY,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  sensorWrap: { position: 'relative' },
+  sensorDot: {
+    position: 'absolute',
+    right: -2,
+    top: -2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#ef4444',
+    borderWidth: 2,
+    borderColor: '#0f172a',
+  },
+  executionHomeIndicator: {
+    alignSelf: 'center',
+    marginTop: 10,
+    width: 128,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#e2e8f0',
+    opacity: 0.35,
+  },
 
   summaryScroll: { paddingHorizontal: 20, paddingBottom: 120 },
+  summaryTop: { paddingTop: 8, alignItems: 'flex-start' },
   summaryHero: { alignItems: 'center', marginTop: 18, marginBottom: 18 },
   summaryBadge: { width: 96, height: 96, borderRadius: 48, backgroundColor: '#dcfce7', alignItems: 'center', justifyContent: 'center' },
   summaryTitle: { fontSize: 38, marginTop: 18, fontWeight: '700', color: '#0f172a' },
