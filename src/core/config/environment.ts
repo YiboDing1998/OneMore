@@ -1,35 +1,50 @@
 /**
- * 环境配置和常量
+ * Runtime environment configuration.
  */
 
-// 注: 根据运行环境确定配置
-// const ENV = process.env.NODE_ENV || 'development';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+
+function getDevApiBaseUrl() {
+  const envBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (envBaseUrl) return envBaseUrl;
+
+  const hostUri =
+    Constants.expoConfig?.hostUri ||
+    (Constants as any).manifest2?.extra?.expoClient?.hostUri ||
+    (Constants as any).manifest?.debuggerHost;
+
+  if (!hostUri) {
+    const fallbackHost = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+    return `http://${fallbackHost}:3001/api`;
+  }
+
+  const host = String(hostUri).split(':')[0];
+  const normalizedHost =
+    Platform.OS === 'android' && host === 'localhost' ? '10.0.2.2' : host;
+
+  return `http://${normalizedHost}:3001/api`;
+}
 
 export const config = {
-  // API 配置
   api: {
-    baseUrl: __DEV__
-      ? 'http://localhost:3000/api'
-      : 'https://api.fitnessapp.com/api',
+    baseUrl: __DEV__ ? getDevApiBaseUrl() : 'https://api.fitnessapp.com/api',
     timeout: 30000,
     retryAttempts: 3,
   },
 
-  // 存储配置
   storage: {
     namespace: 'fitness_app_',
     authTokenKey: 'auth_token',
     userKey: 'user_data',
-    cacheExpiry: 3600000, // 1 小时
+    cacheExpiry: 3600000,
   },
 
-  // 日志配置
   logging: {
     enabled: __DEV__,
     level: __DEV__ ? 'debug' : 'error',
   },
 
-  // 功能开关
   features: {
     offlineMode: true,
     analytics: !__DEV__,

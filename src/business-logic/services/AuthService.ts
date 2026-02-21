@@ -1,6 +1,5 @@
 /**
- * 认证服务 - 业务逻辑层
- * 处理所有与认证相关的业务逻辑
+ * Authentication service.
  */
 
 import { apiClient } from '../../data/api/client';
@@ -17,9 +16,6 @@ export class AuthService {
     error: null,
   };
 
-  /**
-   * 登录
-   */
   async login(email: string, password: string): Promise<User> {
     try {
       this.authState.isLoading = true;
@@ -35,7 +31,6 @@ export class AuthService {
 
       const { user, token } = response.data;
 
-      // 保存认证令牌
       apiClient.setAuthToken(token);
       await storageManager.setItem(config.storage.authTokenKey, token);
       await storageManager.setObject(config.storage.userKey, user);
@@ -55,14 +50,7 @@ export class AuthService {
     }
   }
 
-  /**
-   * 注册
-   */
-  async register(
-    email: string,
-    password: string,
-    name: string
-  ): Promise<User> {
+  async register(email: string, password: string, name: string): Promise<User> {
     try {
       this.authState.isLoading = true;
       this.authState.error = null;
@@ -77,7 +65,6 @@ export class AuthService {
 
       const { user, token } = response.data;
 
-      // 自动登录
       apiClient.setAuthToken(token);
       await storageManager.setItem(config.storage.authTokenKey, token);
       await storageManager.setObject(config.storage.userKey, user);
@@ -97,17 +84,12 @@ export class AuthService {
     }
   }
 
-  /**
-   * 登出
-   */
   async logout(): Promise<void> {
     try {
-      // 可选：通知服务器登出
       await apiClient.post('/auth/logout', {});
     } catch (error) {
       logger.warn('Logout API error (non-blocking)', error);
     } finally {
-      // 清除本地数据
       apiClient.clearAuthToken();
       await storageManager.removeItem(config.storage.authTokenKey);
       await storageManager.removeItem(config.storage.userKey);
@@ -123,54 +105,56 @@ export class AuthService {
     }
   }
 
-  /**
-   * 初始化认证（从存储恢复）
-   */
   async initAuth(): Promise<boolean> {
     try {
       this.authState.isLoading = true;
+      this.authState.error = null;
 
       const token = await storageManager.getItem(config.storage.authTokenKey);
-      const user = await storageManager.getObject<User>(config.storage.userKey);
+      if (!token) return false;
 
-      if (token && user) {
-        apiClient.setAuthToken(token);
-        this.authState.user = user;
-        this.authState.isAuthenticated = true;
-        logger.info('Auth restored from storage');
-        return true;
+      apiClient.setAuthToken(token);
+
+      const response = await apiClient.get<ApiResponse<{ user: User }>>('/auth/me');
+      if (!response.success || !response.data) {
+        throw new Error('Session expired');
       }
 
-      return false;
+      const { user } = response.data;
+      await storageManager.setObject(config.storage.userKey, user);
+
+      this.authState.user = user;
+      this.authState.isAuthenticated = true;
+
+      logger.info('Auth restored from backend session', user.email);
+      return true;
     } catch (error) {
-      logger.error('Auth init error', error);
+      apiClient.clearAuthToken();
+      await storageManager.removeItem(config.storage.authTokenKey);
+      await storageManager.removeItem(config.storage.userKey);
+
+      this.authState.user = null;
+      this.authState.isAuthenticated = false;
+      this.authState.error = null;
+
+      logger.warn('Auth init failed, local session cleared', error);
       return false;
     } finally {
       this.authState.isLoading = false;
     }
   }
 
-  /**
-   * 获取认证状态
-   */
   getAuthState(): Readonly<AuthState> {
     return { ...this.authState };
   }
 
-  /**
-   * 是否已认证
-   */
   isAuthenticated(): boolean {
     return this.authState.isAuthenticated;
   }
 
-  /**
-   * 获取当前用户
-   */
   getCurrentUser(): User | null {
     return this.authState.user || null;
   }
 }
 
-// 导出单例
 export const authService = new AuthService();

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 
 const PRIMARY = '#22c55e';
 
@@ -34,7 +34,6 @@ const setRows = [
 ];
 
 export default function TrainingScreen() {
-  const navigation = useNavigation();
   const [mode, setMode] = useState<ScreenMode>('home');
   const [energy, setEnergy] = useState('5');
   const [soreness, setSoreness] = useState('3');
@@ -56,19 +55,6 @@ export default function TrainingScreen() {
       });
       return () => sub.remove();
     }, [mode]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({
-        tabBarStyle: mode === 'home' ? undefined : { display: 'none' },
-      });
-      return () => {
-        navigation.setOptions({
-          tabBarStyle: undefined,
-        });
-      };
-    }, [mode, navigation]),
   );
 
   if (mode === 'execution') {

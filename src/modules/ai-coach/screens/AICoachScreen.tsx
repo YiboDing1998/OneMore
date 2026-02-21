@@ -1,7 +1,14 @@
-import React, { useCallback, useState } from 'react';
-import { BackHandler, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { BackHandler, Image, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import {
+  AIMessage,
+  createConversation,
+  getConversations,
+  getMessages,
+  sendMessage,
+} from '@/src/modules/ai-coach/services/aiCoachService';
 
 const PRIMARY = '#22c55e';
 
@@ -15,9 +22,90 @@ const quickActions = [
 ];
 
 export default function AICoachScreen() {
-  const navigation = useNavigation();
+  const chatScrollRef = useRef<ScrollView>(null);
   const [mode, setMode] = useState<Mode>('dashboard');
   const [msg, setMsg] = useState('');
+  const [messages, setMessages] = useState<AIMessage[]>([]);
+  const [conversationId, setConversationId] = useState<string>('');
+  const [loadingChat, setLoadingChat] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [aiTyping, setAiTyping] = useState(false);
+  const [errorText, setErrorText] = useState('');
+
+  const scrollToBottom = useCallback((animated = true) => {
+    chatScrollRef.current?.scrollToEnd({ animated });
+  }, []);
+
+  const initConversation = useCallback(async () => {
+    setLoadingChat(true);
+    setErrorText('');
+    try {
+      const list = await getConversations();
+      let selectedId = list[0]?.id;
+      if (!selectedId) {
+        const created = await createConversation('New Chat');
+        selectedId = created.id;
+      }
+
+      const history = await getMessages(selectedId);
+      setConversationId(history.conversationId);
+      setMessages(history.messages || []);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load chat.';
+      setErrorText(message);
+    } finally {
+      setLoadingChat(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mode === 'chat') {
+      initConversation();
+    }
+  }, [mode, initConversation]);
+
+  useEffect(() => {
+    if (mode === 'chat') {
+      const timer = setTimeout(() => scrollToBottom(false), 30);
+      return () => clearTimeout(timer);
+    }
+  }, [messages, aiTyping, mode, scrollToBottom]);
+
+  const onSend = useCallback(async () => {
+    const text = msg.trim();
+    if (!text || sending) return;
+
+    const optimisticUserMessage: AIMessage = {
+      id: `local-${Date.now()}`,
+      role: 'user',
+      text,
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, optimisticUserMessage]);
+    setMsg('');
+    setSending(true);
+    setAiTyping(true);
+    setErrorText('');
+    try {
+      let activeConversationId = conversationId;
+      if (!activeConversationId) {
+        const created = await createConversation('New Chat');
+        activeConversationId = created.id;
+        setConversationId(created.id);
+      }
+
+      const response = await sendMessage(text, activeConversationId);
+      setConversationId(response.conversationId);
+      setMessages(response.messages || []);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to send message.';
+      setErrorText(message);
+    } finally {
+      setAiTyping(false);
+      setSending(false);
+    }
+  }, [msg, sending, conversationId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -30,19 +118,6 @@ export default function AICoachScreen() {
       });
       return () => sub.remove();
     }, [mode]),
-  );
-
-  useFocusEffect(
-    useCallback(() => {
-      navigation.setOptions({
-        tabBarStyle: mode === 'dashboard' ? undefined : { display: 'none' },
-      });
-      return () => {
-        navigation.setOptions({
-          tabBarStyle: undefined,
-        });
-      };
-    }, [mode, navigation]),
   );
 
   if (mode === 'chat') {
@@ -61,42 +136,48 @@ export default function AICoachScreen() {
           </View>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.chatBody}>
-          <View style={styles.aiBubbleRow}>
-            <View style={styles.aiAvatar}><MaterialIcons name="auto-awesome" size={16} color="#fff" /></View>
-            <View style={styles.aiBubble}><Text style={styles.bubbleText}>I&apos;ve analyzed your heavy leg session. Intensity is 15% above your average. Ready for your breakdown?</Text></View>
-          </View>
-
-          <View style={styles.analysisCard}>
-            <View style={styles.analysisHead}><Text style={styles.analysisLabel}>Workout Analysis</Text><Text style={styles.analysisStatus}>OPTIMAL</Text></View>
-            <View style={styles.analysisTop}><View><Text style={styles.analysisVolume}>12.4k</Text><Text style={styles.analysisUnit}>LBS VOLUME</Text></View><Image source={{ uri: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=300&q=80' }} style={styles.analysisImg} /></View>
-            <Text style={styles.line}>Quads & Glutes: High Impact</Text>
-            <Text style={styles.line}>Core Stability: Moderate</Text>
-          </View>
-
-          <View style={styles.userBubbleWrap}><View style={styles.userBubble}><Text style={[styles.bubbleText, { color: '#fff' }]}>Awesome! What&apos;s the plan for next week?</Text></View></View>
-
-          <View style={styles.aiBubbleRow}>
-            <View style={styles.aiAvatar}><MaterialIcons name="auto-awesome" size={16} color="#fff" /></View>
-            <View style={styles.aiBubble}><Text style={styles.bubbleText}>Based on your fatigue levels, I recommend a deload for upper body while maintaining leg intensity.</Text></View>
-          </View>
-
-          <View style={styles.planCard}>
-            <Text style={styles.planHead}>NEXT WEEK SCHEDULE</Text>
-            <View style={styles.planGrid}>
-              <View style={[styles.planDay, styles.planDayGreen]}><Text style={styles.planDayKey}>MON</Text><Text style={styles.planDayText}>Push</Text><Text style={styles.planDaySub}>Deload</Text></View>
-              <View style={styles.planDay}><Text style={styles.planDayKey}>WED</Text><Text style={styles.planDayText}>Legs</Text><Text style={styles.planDaySub}>Max Vol</Text></View>
-              <View style={styles.planDay}><Text style={styles.planDayKey}>FRI</Text><Text style={styles.planDayText}>Pull</Text><Text style={styles.planDaySub}>Deload</Text></View>
+        <ScrollView
+          ref={chatScrollRef}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.chatBody}
+          onContentSizeChange={() => scrollToBottom(false)}
+        >
+          {loadingChat ? (
+            <Text style={styles.chatHint}>Loading conversation...</Text>
+          ) : messages.length === 0 ? (
+            <Text style={styles.chatHint}>Start by sending a message.</Text>
+          ) : (
+            messages.map((item) =>
+              item.role === 'assistant' ? (
+                <View key={item.id} style={styles.aiBubbleRow}>
+                  <View style={styles.aiAvatar}><MaterialIcons name="auto-awesome" size={16} color="#fff" /></View>
+                  <View style={styles.aiBubble}><Text style={styles.bubbleText}>{item.text}</Text></View>
+                </View>
+              ) : (
+                <View key={item.id} style={styles.userBubbleWrap}>
+                  <View style={styles.userBubble}>
+                    <Text style={[styles.bubbleText, { color: '#fff' }]}>{item.text}</Text>
+                  </View>
+                </View>
+              ),
+            )
+          )}
+          {aiTyping ? (
+            <View style={styles.aiBubbleRow}>
+              <View style={styles.aiAvatar}><MaterialIcons name="auto-awesome" size={16} color="#fff" /></View>
+              <View style={styles.aiBubble}>
+                <Text style={styles.typingText}>OneMore AI is preparing a reply...</Text>
+              </View>
             </View>
-            <TouchableOpacity style={styles.acceptBtn}><Text style={styles.acceptBtnText}>Accept Training Plan</Text></TouchableOpacity>
-          </View>
+          ) : null}
         </ScrollView>
 
         <View style={styles.inputWrap}>
           <TouchableOpacity style={styles.plusBtn}><MaterialIcons name="add" size={20} color="#94a3b8" /></TouchableOpacity>
-          <View style={styles.inputBox}><TextInput value={msg} onChangeText={setMsg} placeholder="Message OneMore AI..." placeholderTextColor="#94a3b8" style={styles.input} /><MaterialIcons name="mic" size={20} color="#94a3b8" /></View>
-          <TouchableOpacity style={styles.sendBtn}><MaterialIcons name="arrow-upward" size={18} color="#fff" /></TouchableOpacity>
+          <View style={styles.inputBox}><TextInput value={msg} onChangeText={setMsg} placeholder="Message OneMore AI..." placeholderTextColor="#94a3b8" style={[styles.input, Platform.OS === 'web' && styles.inputWeb]} editable={!sending} /><MaterialIcons name="mic" size={20} color="#94a3b8" /></View>
+          <TouchableOpacity style={[styles.sendBtn, sending && styles.sendBtnDisabled]} onPress={onSend} disabled={sending}><MaterialIcons name="arrow-upward" size={18} color="#fff" /></TouchableOpacity>
         </View>
+        {!!errorText && <Text style={styles.chatError}>{errorText}</Text>}
       </SafeAreaView>
     );
   }
@@ -235,6 +316,21 @@ const styles = StyleSheet.create({
   inputWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
   plusBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' },
   inputBox: { flex: 1, height: 42, borderRadius: 16, backgroundColor: '#f1f5f9', paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  input: { flex: 1, color: '#1e293b' },
+  input: {
+    flex: 1,
+    color: '#1e293b',
+    borderWidth: 0,
+    outlineWidth: 0,
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+  },
+  inputWeb: {
+    outlineStyle: 'none',
+    boxShadow: 'none',
+  } as any,
   sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#10b981', alignItems: 'center', justifyContent: 'center' },
+  sendBtnDisabled: { opacity: 0.55 },
+  chatHint: { color: '#94a3b8', fontSize: 13, marginLeft: 36, marginTop: 8 },
+  typingText: { color: '#64748b', fontSize: 13, fontStyle: 'italic' },
+  chatError: { position: 'absolute', left: 14, right: 14, bottom: 64, color: '#ef4444', fontSize: 12 },
 });

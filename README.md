@@ -67,6 +67,7 @@ npm install
 ### 2) Start the dev server
 
 ```bash
+npm run server
 npm run start
 ```
 
@@ -82,6 +83,7 @@ npm run web       # Web
 
 ```bash
 npm run start
+npm run server
 npm run android
 npm run ios
 npm run web

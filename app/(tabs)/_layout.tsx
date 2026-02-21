@@ -134,6 +134,7 @@ const styles = StyleSheet.create({
   },
   scene: {
     paddingBottom: 108,
+    backgroundColor: '#f8fafc',
   },
   tabBarBg: {
     ...StyleSheet.absoluteFillObject,
