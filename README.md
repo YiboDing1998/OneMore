@@ -1,14 +1,25 @@
-# FitnessAppMobile
+# OneMore
 
 A fitness mobile app built with **React Native + Expo Router + TypeScript**, focused on training, workout tracking, AI coaching, and community experience.
 
 ## Highlights
+- AI Coach: talk and give advices plans based on your previous records and notes
+<img width="543" height="1600" alt="image" src="https://github.com/user-attachments/assets/49e4e20c-82fc-4ecd-9bd0-058c7b374153" />
+<img width="670" height="1600" alt="image" src="https://github.com/user-attachments/assets/2fcbdeba-aa17-434b-a2ed-6a9dc857cc85" />
 
-- Bottom-tab navigation with core modules: `Training / History / AI Coach / Social / Profile`
-- End-to-end training flow: workout home -> execution -> summary
-- Auth screens included: splash, login, register, and loading state
-- Global state management with Zustand (auth + user session)
-- Clean layered architecture: `presentation / business-logic / data / core / modules`
+- Interact with friends more engagely
+<img width="494" height="1600" alt="image" src="https://github.com/user-attachments/assets/d2488e1b-8e0b-4c93-9bea-2573f1f475e5" />
+
+-
+<img width="454" height="1600" alt="image" src="https://github.com/user-attachments/assets/be48b1a2-7b38-4f92-bf07-6aecb9b8f9f3" />
+-
+<img width="509" height="1600" alt="image" src="https://github.com/user-attachments/assets/f23c93ca-2c14-4571-b8c1-a4180cd3e661" />
+-
+<img width="627" height="1600" alt="image" src="https://github.com/user-attachments/assets/4931cc9d-4a39-4737-aea3-10b2e86fcbec" />
+
+
+
+
 
 ## Tech Stack
 
@@ -71,27 +82,3 @@ npm run lint
 npm run reset-project
 ```
 
-## Current Status
-
-- Current version is focused on mobile UI and interaction flow (good for product demo and frontend iteration).
-- Login currently uses a local mock session flow (not real backend authentication).
-- `src/data/api/client.ts` and repository layers are ready for real API integration.
-
-## Roadmap
-
-- Integrate real account system and token-based authentication
-- Connect training, nutrition, and community APIs
-- Improve test coverage and CI pipeline
-- Add release/build pipeline with EAS
-
-## Related Docs
-
-- `GETTING_STARTED.md`
-- `QUICK_START.md`
-- `ARCHITECTURE.md`
-- `PROJECT_STRUCTURE.md`
-<<<<<<< HEAD
-- `INTEGRATION_GUIDE.md`
-=======
-- `INTEGRATION_GUIDE.md`
->>>>>>> master
