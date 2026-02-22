@@ -78,6 +78,8 @@ async function route(req, parsedUrl) {
 
   if (method === 'GET' && apiPath === '/nutrition/overview') return nutrition.getDietOverview(req, parsedUrl);
   if (method === 'POST' && apiPath === '/nutrition/logs') return nutrition.addDietEntry(req);
+  if (method === 'GET' && apiPath === '/nutrition/daily') return nutrition.getDailyNutrition(req, parsedUrl);
+  if (method === 'POST' && apiPath === '/nutrition/daily') return nutrition.upsertDailyNutrition(req);
 
   return fail(404, 'NOT_FOUND', `Route not found: ${method} ${parsedUrl.pathname}`);
 }

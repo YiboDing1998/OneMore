@@ -7,7 +7,11 @@ function defaultDb() {
   return {
     users: [],
     sessions: {},
+    exercises: [],
+    foods: [],
     records: [],
+    workoutLogs: [],
+    dailyNutritionLogs: [],
     posts: [],
     aiConversations: {},
     nutritionLogs: [],
@@ -65,6 +69,10 @@ function normalizeDb(raw) {
   if (!Array.isArray(merged.users)) merged.users = [];
   if (!merged.sessions || typeof merged.sessions !== 'object') merged.sessions = {};
   if (!Array.isArray(merged.records)) merged.records = [];
+  if (!Array.isArray(merged.exercises)) merged.exercises = [];
+  if (!Array.isArray(merged.foods)) merged.foods = [];
+  if (!Array.isArray(merged.workoutLogs)) merged.workoutLogs = [];
+  if (!Array.isArray(merged.dailyNutritionLogs)) merged.dailyNutritionLogs = [];
   if (!Array.isArray(merged.posts)) merged.posts = [];
   if (!merged.aiConversations || typeof merged.aiConversations !== 'object') merged.aiConversations = {};
   if (!Array.isArray(merged.nutritionLogs)) merged.nutritionLogs = [];

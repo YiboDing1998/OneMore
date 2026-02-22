@@ -27,7 +27,11 @@ function defaultDb() {
   return {
     users: [],
     sessions: {},
+    exercises: [],
+    foods: [],
     records: [],
+    workoutLogs: [],
+    dailyNutritionLogs: [],
     posts: [],
     aiConversations: {},
   };
@@ -226,6 +230,32 @@ function ensureSeedPosts(db) {
       ],
       createdAt: new Date(now - 1000 * 60 * 30).toISOString(),
     },
+  ];
+}
+
+function ensureSeedExercises(db) {
+  if (Array.isArray(db.exercises) && db.exercises.length > 0) return;
+
+  db.exercises = [
+    { id: crypto.randomUUID(), name: 'Incline Barbell Bench Press', muscleGroup: 'Chest', equipment: 'Barbell' },
+    { id: crypto.randomUUID(), name: 'Incline Dumbbell Press', muscleGroup: 'Chest', equipment: 'Dumbbell' },
+    { id: crypto.randomUUID(), name: 'Flat Barbell Bench Press', muscleGroup: 'Chest', equipment: 'Barbell' },
+    { id: crypto.randomUUID(), name: 'Cable Crossover', muscleGroup: 'Chest', equipment: 'Cable' },
+    { id: crypto.randomUUID(), name: 'Parallel Bar Dips', muscleGroup: 'Triceps', equipment: 'Bodyweight' },
+    { id: crypto.randomUUID(), name: 'Flat Dumbbell Fly', muscleGroup: 'Chest', equipment: 'Dumbbell' },
+  ];
+}
+
+function ensureSeedFoods(db) {
+  if (Array.isArray(db.foods) && db.foods.length > 0) return;
+
+  db.foods = [
+    { id: crypto.randomUUID(), name: 'Whey Protein Powder', caloriesPer100g: 302, proteinPer100g: 75, carbsPer100g: 0, fatPer100g: 0 },
+    { id: crypto.randomUUID(), name: 'Banana', caloriesPer100g: 95, proteinPer100g: 1, carbsPer100g: 22, fatPer100g: 0 },
+    { id: crypto.randomUUID(), name: 'Fresh Kale', caloriesPer100g: 46, proteinPer100g: 5, carbsPer100g: 5, fatPer100g: 0 },
+    { id: crypto.randomUUID(), name: 'Greek Yogurt (Non-fat)', caloriesPer100g: 75, proteinPer100g: 10, carbsPer100g: 4, fatPer100g: 1 },
+    { id: crypto.randomUUID(), name: 'Steamed Broccoli', caloriesPer100g: 30, proteinPer100g: 2, carbsPer100g: 2, fatPer100g: 1 },
+    { id: crypto.randomUUID(), name: 'Cooked White Rice', caloriesPer100g: 116, proteinPer100g: 2, carbsPer100g: 25, fatPer100g: 0 },
   ];
 }
 
@@ -572,6 +602,142 @@ async function handleDeleteRecord(req, recordId) {
   db.records.splice(idx, 1);
   writeDb(db);
   return ok({ deleted: true });
+}
+
+async function handleGetExercises(req, parsedUrl) {
+  const authCtx = requireAuth(req);
+  if (authCtx.error) return authCtx.error;
+
+  const { db } = authCtx;
+  ensureSeedExercises(db);
+  writeDb(db);
+
+  const q = String(parsedUrl.searchParams.get('q') || '').trim().toLowerCase();
+  const muscle = String(parsedUrl.searchParams.get('muscleGroup') || '').trim().toLowerCase();
+  const equipment = String(parsedUrl.searchParams.get('equipment') || '').trim().toLowerCase();
+
+  let list = db.exercises.slice();
+  if (q) list = list.filter((x) => String(x.name).toLowerCase().includes(q));
+  if (muscle) list = list.filter((x) => String(x.muscleGroup).toLowerCase() === muscle);
+  if (equipment) list = list.filter((x) => String(x.equipment).toLowerCase() === equipment);
+
+  return ok({ exercises: list });
+}
+
+async function handleGetFoods(req, parsedUrl) {
+  const authCtx = requireAuth(req);
+  if (authCtx.error) return authCtx.error;
+
+  const { db } = authCtx;
+  ensureSeedFoods(db);
+  writeDb(db);
+
+  const q = String(parsedUrl.searchParams.get('q') || '').trim().toLowerCase();
+  let list = db.foods.slice();
+  if (q) list = list.filter((x) => String(x.name).toLowerCase().includes(q));
+
+  return ok({ foods: list });
+}
+
+async function handleGetWorkoutLogs(req, parsedUrl) {
+  const authCtx = requireAuth(req);
+  if (authCtx.error) return authCtx.error;
+
+  const { db, auth } = authCtx;
+  const date = String(parsedUrl.searchParams.get('date') || '').trim();
+
+  let logs = db.workoutLogs
+    .filter((item) => item.userId === auth.user.id)
+    .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+
+  if (date) {
+    logs = logs.filter((item) => String(item.completedAt).startsWith(date));
+  }
+
+  return ok({ logs });
+}
+
+async function handleCreateWorkoutLog(req) {
+  const authCtx = requireAuth(req);
+  if (authCtx.error) return authCtx.error;
+
+  const body = await parseJsonBody(req);
+  const title = String(body.title || '').trim();
+  if (!title) return fail(400, 'VALIDATION_ERROR', 'Workout title is required.');
+
+  const { db, auth } = authCtx;
+  const log = {
+    id: crypto.randomUUID(),
+    userId: auth.user.id,
+    title,
+    duration: Number(body.duration || 0),
+    volume: Number(body.volume || 0),
+    calories: Number(body.calories || 0),
+    exercises: Array.isArray(body.exercises) ? body.exercises : [],
+    completedAt: new Date().toISOString(),
+  };
+
+  db.workoutLogs.push(log);
+  writeDb(db);
+  return ok({ log }, 201);
+}
+
+async function handleGetDailyNutrition(req, parsedUrl) {
+  const authCtx = requireAuth(req);
+  if (authCtx.error) return authCtx.error;
+
+  const { db, auth } = authCtx;
+  const date = String(parsedUrl.searchParams.get('date') || '').trim() || new Date().toISOString().slice(0, 10);
+
+  let log = db.dailyNutritionLogs.find((item) => item.userId === auth.user.id && item.date === date);
+  if (!log) {
+    log = {
+      id: crypto.randomUUID(),
+      userId: auth.user.id,
+      date,
+      meals: [],
+      totals: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+      updatedAt: new Date().toISOString(),
+    };
+    db.dailyNutritionLogs.push(log);
+    writeDb(db);
+  }
+
+  return ok({ log });
+}
+
+async function handleUpsertDailyNutrition(req) {
+  const authCtx = requireAuth(req);
+  if (authCtx.error) return authCtx.error;
+
+  const body = await parseJsonBody(req);
+  const date = String(body.date || '').trim() || new Date().toISOString().slice(0, 10);
+  const meals = Array.isArray(body.meals) ? body.meals : [];
+  const totals = body.totals && typeof body.totals === 'object'
+    ? body.totals
+    : { calories: 0, protein: 0, carbs: 0, fat: 0 };
+
+  const { db, auth } = authCtx;
+  const index = db.dailyNutritionLogs.findIndex((item) => item.userId === auth.user.id && item.date === date);
+  const next = {
+    id: index >= 0 ? db.dailyNutritionLogs[index].id : crypto.randomUUID(),
+    userId: auth.user.id,
+    date,
+    meals,
+    totals: {
+      calories: Number(totals.calories || 0),
+      protein: Number(totals.protein || 0),
+      carbs: Number(totals.carbs || 0),
+      fat: Number(totals.fat || 0),
+    },
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (index >= 0) db.dailyNutritionLogs[index] = next;
+  else db.dailyNutritionLogs.push(next);
+
+  writeDb(db);
+  return ok({ log: next });
 }
 
 async function handleGetPosts(req) {
@@ -971,6 +1137,37 @@ const server = http.createServer(async (req, res) => {
     if (method === 'DELETE' && pathname.startsWith('/api/records/')) {
       const id = pathname.split('/')[3];
       const response = await handleDeleteRecord(req, id);
+      sendJson(res, response.statusCode, response.payload);
+      return;
+    }
+
+    if (method === 'GET' && pathname === '/api/catalog/exercises') {
+      const response = await handleGetExercises(req, parsedUrl);
+      sendJson(res, response.statusCode, response.payload);
+      return;
+    }
+    if (method === 'GET' && pathname === '/api/catalog/foods') {
+      const response = await handleGetFoods(req, parsedUrl);
+      sendJson(res, response.statusCode, response.payload);
+      return;
+    }
+    if (method === 'GET' && pathname === '/api/workouts/logs') {
+      const response = await handleGetWorkoutLogs(req, parsedUrl);
+      sendJson(res, response.statusCode, response.payload);
+      return;
+    }
+    if (method === 'POST' && pathname === '/api/workouts/logs') {
+      const response = await handleCreateWorkoutLog(req);
+      sendJson(res, response.statusCode, response.payload);
+      return;
+    }
+    if (method === 'GET' && pathname === '/api/nutrition/daily') {
+      const response = await handleGetDailyNutrition(req, parsedUrl);
+      sendJson(res, response.statusCode, response.payload);
+      return;
+    }
+    if (method === 'POST' && pathname === '/api/nutrition/daily') {
+      const response = await handleUpsertDailyNutrition(req);
       sendJson(res, response.statusCode, response.payload);
       return;
     }

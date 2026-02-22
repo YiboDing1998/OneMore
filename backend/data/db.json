@@ -53,6 +53,15 @@
       "passwordHash": "e57f3bdf805d58a65bb0c2ccfaa5d281:e1151830ed7d36ecd2a65fb958051bc108d9813a7c498df41807ff10093e899f985a5afdfd8dc9cdbf834a37781f75a0d27f8439645a619ed0aa4c7b44df022f",
       "createdAt": "2026-02-21T08:49:59.557Z",
       "updatedAt": "2026-02-21T08:49:59.557Z"
+    },
+    {
+      "id": "48475853-9d0a-4fa9-a137-72851c591ff3",
+      "email": "dbplan_1771740388857@ex.com",
+      "name": "DB User",
+      "avatar": null,
+      "passwordHash": "0f1311481e8aca41d11b169a700e2e12:78eaf7cd067c427a533ccd0db7fbf6e752aa6ec69527771cfb2d840b11ed5387d76d4a001542749aebdbfd75eeb4d12fb668bad3ede615aab52eb0676862a130",
+      "createdAt": "2026-02-22T06:06:28.907Z",
+      "updatedAt": "2026-02-22T06:06:28.907Z"
     }
   ],
   "sessions": {
@@ -87,8 +96,100 @@
     "ac5728e48a25e3e422553ef321e1182b8394ea46644e2e867b37cf6878d5d451": {
       "userId": "10dd80df-975a-4563-b381-fda4e44fbd82",
       "expiresAt": 1774255799610
+    },
+    "0457d9e0ce89e500c905be18cf159149fa730b0f83843448a53e0121855bdaeb": {
+      "userId": "48475853-9d0a-4fa9-a137-72851c591ff3",
+      "expiresAt": 1774332388959
     }
   },
+  "exercises": [
+    {
+      "id": "4c1d5778-be19-4636-9d25-f0fbb20cab36",
+      "name": "Incline Barbell Bench Press",
+      "muscleGroup": "Chest",
+      "equipment": "Barbell"
+    },
+    {
+      "id": "7553f417-3db2-42c0-b225-47cc72807e05",
+      "name": "Incline Dumbbell Press",
+      "muscleGroup": "Chest",
+      "equipment": "Dumbbell"
+    },
+    {
+      "id": "674cd977-337e-4be2-9e4e-5089cb45b0d0",
+      "name": "Flat Barbell Bench Press",
+      "muscleGroup": "Chest",
+      "equipment": "Barbell"
+    },
+    {
+      "id": "2706a79c-4d76-42ed-bc9b-25cd91832e1f",
+      "name": "Cable Crossover",
+      "muscleGroup": "Chest",
+      "equipment": "Cable"
+    },
+    {
+      "id": "e601909b-5137-44dc-8156-0fb4ff487bdd",
+      "name": "Parallel Bar Dips",
+      "muscleGroup": "Triceps",
+      "equipment": "Bodyweight"
+    },
+    {
+      "id": "30b005ff-626c-4eeb-9af4-cf1201c42403",
+      "name": "Flat Dumbbell Fly",
+      "muscleGroup": "Chest",
+      "equipment": "Dumbbell"
+    }
+  ],
+  "foods": [
+    {
+      "id": "2757c765-b430-48d2-a4a0-636fbfbcf36b",
+      "name": "Whey Protein Powder",
+      "caloriesPer100g": 302,
+      "proteinPer100g": 75,
+      "carbsPer100g": 0,
+      "fatPer100g": 0
+    },
+    {
+      "id": "a9760073-2b79-4e00-a065-ca17786a1783",
+      "name": "Banana",
+      "caloriesPer100g": 95,
+      "proteinPer100g": 1,
+      "carbsPer100g": 22,
+      "fatPer100g": 0
+    },
+    {
+      "id": "148b75e0-c98b-448a-9656-c836f89782be",
+      "name": "Fresh Kale",
+      "caloriesPer100g": 46,
+      "proteinPer100g": 5,
+      "carbsPer100g": 5,
+      "fatPer100g": 0
+    },
+    {
+      "id": "0189731f-0d7d-49ff-ae3c-5167d9755105",
+      "name": "Greek Yogurt (Non-fat)",
+      "caloriesPer100g": 75,
+      "proteinPer100g": 10,
+      "carbsPer100g": 4,
+      "fatPer100g": 1
+    },
+    {
+      "id": "48f7252b-bc2f-41e0-b691-5ae39a965536",
+      "name": "Steamed Broccoli",
+      "caloriesPer100g": 30,
+      "proteinPer100g": 2,
+      "carbsPer100g": 2,
+      "fatPer100g": 1
+    },
+    {
+      "id": "99be7adf-e152-428c-a3e9-cdec3b7940ff",
+      "name": "Cooked White Rice",
+      "caloriesPer100g": 116,
+      "proteinPer100g": 2,
+      "carbsPer100g": 25,
+      "fatPer100g": 0
+    }
+  ],
   "records": [
     {
       "id": "5b15ba0b-0004-452f-a799-3735544a7dfd",
@@ -99,6 +200,41 @@
       "bpm": 146,
       "image": null,
       "date": "2026-02-21T06:11:31.468Z"
+    }
+  ],
+  "workoutLogs": [
+    {
+      "id": "9c98092a-2c65-48a3-8e4a-4ae7c000a6f9",
+      "userId": "48475853-9d0a-4fa9-a137-72851c591ff3",
+      "title": "Chest day",
+      "duration": 62,
+      "volume": 3500,
+      "calories": 0,
+      "exercises": [
+        {
+          "name": "Bench Press"
+        }
+      ],
+      "completedAt": "2026-02-22T06:06:28.973Z"
+    }
+  ],
+  "dailyNutritionLogs": [
+    {
+      "id": "477e21e0-b39b-49b5-beb1-831d6f681ccf",
+      "userId": "48475853-9d0a-4fa9-a137-72851c591ff3",
+      "date": "2026-02-22",
+      "meals": [
+        {
+          "name": "Banana"
+        }
+      ],
+      "totals": {
+        "calories": 95,
+        "protein": 1,
+        "carbs": 22,
+        "fat": 0
+      },
+      "updatedAt": "2026-02-22T06:06:28.975Z"
     }
   ],
   "posts": [

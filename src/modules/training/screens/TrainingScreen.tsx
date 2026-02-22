@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BackHandler,
   Image,
@@ -13,6 +13,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
 const PRIMARY = '#22c55e';
 
@@ -34,11 +35,54 @@ const setRows = [
 ];
 
 export default function TrainingScreen() {
+  const router = useRouter();
   const [mode, setMode] = useState<ScreenMode>('home');
   const [energy, setEnergy] = useState('5');
   const [soreness, setSoreness] = useState('3');
+  const [workoutStartedAt, setWorkoutStartedAt] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  const timer = useMemo(() => '00:12:45', []);
+  const timer = useMemo(() => {
+    const hours = String(Math.floor(elapsedSeconds / 3600)).padStart(2, '0');
+    const minutes = String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, '0');
+    const seconds = String(elapsedSeconds % 60).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  }, [elapsedSeconds]);
+  const dateText = useMemo(() => {
+    const now = new Date();
+    const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long' })
+      .format(now)
+      .toUpperCase();
+    const month = new Intl.DateTimeFormat('en-US', { month: 'short' })
+      .format(now)
+      .toUpperCase();
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${weekday}, ${month} ${day}`;
+  }, []);
+
+  useEffect(() => {
+    if (mode !== 'execution') return undefined;
+
+    const startAt = workoutStartedAt ?? Date.now();
+    if (!workoutStartedAt) {
+      setWorkoutStartedAt(startAt);
+    }
+
+    const tick = () => {
+      const sec = Math.max(0, Math.floor((Date.now() - startAt) / 1000));
+      setElapsedSeconds(sec);
+    };
+
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [mode, workoutStartedAt]);
+
+  const startTraining = useCallback(() => {
+    setWorkoutStartedAt(Date.now());
+    setElapsedSeconds(0);
+    setMode('execution');
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -155,7 +199,7 @@ export default function TrainingScreen() {
             <TouchableOpacity style={styles.executionNavBtn}>
               <MaterialIcons name="settings" size={24} color="#94a3b8" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.executionCenterBtn}>
+            <TouchableOpacity style={styles.executionCenterBtn} onPress={() => router.push('/add-exercise')}>
               <MaterialIcons name="add" size={32} color="#ffffff" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.executionNavBtn}>
@@ -228,19 +272,19 @@ export default function TrainingScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.brand}>OneMore</Text>
-            <Text style={styles.date}>Monday, Oct 23</Text>
+            <Text style={styles.date}>{dateText}</Text>
             <Text style={styles.hello}>Hello, Alex</Text>
           </View>
-          <View style={styles.avatarWrap}>
+          <TouchableOpacity style={styles.avatarWrap} onPress={() => router.push('/(tabs)/profile')}>
             <Image
               source={{ uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80' }}
               style={styles.avatar}
             />
             <View style={styles.onlineDot} />
-          </View>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.card}>
+        <TouchableOpacity style={styles.card} activeOpacity={0.95} onPress={() => router.push('/diet-overview')}>
           <View style={styles.cardTop}>
             <View>
               <Text style={styles.cardTitle}>Diet Overview</Text>
@@ -268,7 +312,7 @@ export default function TrainingScreen() {
               </View>
             ))}
           </View>
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Today&apos;s Workout</Text>
@@ -279,7 +323,7 @@ export default function TrainingScreen() {
           <Text style={styles.heroTag}>Hypertrophy Phase</Text>
           <Text style={styles.heroTitle}>Chest, Triceps, Abs</Text>
           <Text style={styles.heroSub}>6 exercises | 75 mins estimated</Text>
-          <TouchableOpacity style={styles.startBtn} onPress={() => setMode('execution')}>
+          <TouchableOpacity style={styles.startBtn} onPress={startTraining}>
             <MaterialIcons name="play-arrow" size={20} color="#0f172a" />
             <Text style={styles.startText}>START TRAINING</Text>
           </TouchableOpacity>
